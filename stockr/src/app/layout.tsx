@@ -3,7 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "StockR | Swipe. Chat. Lead.",
+  title: "YieldR | Swipe. Chat. Invest.",
   description: "Stock discovery with swipe interactions, AI chat, and leaderboards.",
 };
 
