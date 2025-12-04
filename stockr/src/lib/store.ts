@@ -16,7 +16,7 @@ const buildInitialChat = (stock: StockCardData): ChatMessage[] => [
   {
     id: nanoid(),
     sender: "ai",
-    text: `Hey! I am your StockR copilot for ${stock.ticker}. I will bring you price moves, news, and bullish vs bearish cases on demand.`,
+    text: `Hey! I am your YieldR copilot for ${stock.ticker}. Ask me for any related news or financial information.`,
     timestamp: new Date().toISOString(),
   },
 ];
@@ -112,7 +112,7 @@ const buildAiResponse = (stock: StockCardData, userPrompt: string) => {
       1
     )}x sales. Compare that with sector median ~22x and you can see why StockScore tags it as ${score >= 80 ? "Elite" : "Outperform"}.`;
   }
-  return `StockScore™ for ${stock.ticker} is ${score}. Sentiment is ${stock.sentiment} with earnings on ${stock.earningsDate}. Let me know if you want bullish/bearish cases or news.`;
+  return `StockScore™ for ${stock.ticker} is ${score}. Sentiment is ${stock.sentiment} with earnings on ${stock.earningsDate}. Let me know if you want either bullish or bearish catalysts.`;
 };
 
 export const selectCurrentCard = (state: ReturnType<typeof useStockStore.getState>) =>
