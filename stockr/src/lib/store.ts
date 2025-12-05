@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { nanoid } from "nanoid";
-import { stockDeck } from "@/data/stocks";
 import { ChatMessage, StockCardData } from "@/types";
 import { computeScore } from "@/lib/stockScore";
+import { mockFullDeck } from "@/data/mockFullDeck";
 
 export type SwipeDirection = "LEFT" | "RIGHT";
 
@@ -11,6 +11,17 @@ interface SwipeEvent {
   direction: SwipeDirection;
   timestamp: number;
 }
+
+const shuffleArray = (array: StockCardData[]) => {
+  let currentIndex = array.length,
+    randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+};
 
 const buildInitialChat = (stock: StockCardData): ChatMessage[] => [
   {
@@ -24,6 +35,7 @@ const buildInitialChat = (stock: StockCardData): ChatMessage[] => [
 interface StockStoreState {
   deck: StockCardData[];
   currentIndex: number;
+  isLoading: boolean; 
   inbox: Record<string, StockCardData>;
   chatThreads: Record<string, ChatMessage[]>;
   swipeEvents: SwipeEvent[];
@@ -32,64 +44,91 @@ interface StockStoreState {
   swipeRight: (ticker: string) => void;
   setActiveInboxTicker: (ticker: string) => void;
   sendMessage: (ticker: string, message: string) => void;
+  loadDeck: () => Promise<void>; 
 }
 
-export const useStockStore = create<StockStoreState>((set, get) => ({
-  deck: stockDeck,
-  currentIndex: 0,
-  inbox: {},
-  chatThreads: {},
-  swipeEvents: [],
-  activeInboxTicker: undefined,
-  swipeLeft: (ticker) =>
-    set((state) => ({
-      currentIndex: state.currentIndex + 1,
-      swipeEvents: [...state.swipeEvents, { ticker, direction: "LEFT", timestamp: Date.now() }],
-    })),
-  swipeRight: (ticker) =>
-    set((state) => {
-      const stock = state.deck.find((card) => card.ticker === ticker);
-      if (!stock) return state;
-      const inbox = { ...state.inbox, [ticker]: stock };
-      const chatThreads = state.chatThreads[ticker]
-        ? state.chatThreads
-        : { ...state.chatThreads, [ticker]: buildInitialChat(stock) };
-      return {
-        inbox,
-        chatThreads,
+export const useStockStore = create<StockStoreState>((set, get) => {
+  // Initial State
+  const initialState = {
+    deck: [],
+    currentIndex: 0,
+    isLoading: true, 
+    inbox: {},
+    chatThreads: {},
+    swipeEvents: [],
+    activeInboxTicker: undefined,
+  };
+
+  const actions = {
+    loadDeck: async () => {
+      set({ isLoading: true });
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      const shuffledDeck = shuffleArray([...mockFullDeck]);
+
+      set({
+        deck: shuffledDeck,
+        isLoading: false, 
+        currentIndex: 0, 
+      });
+    },
+
+    swipeLeft: (ticker: string) =>
+      set((state) => ({
         currentIndex: state.currentIndex + 1,
-        swipeEvents: [...state.swipeEvents, { ticker, direction: "RIGHT", timestamp: Date.now() }],
-        activeInboxTicker: ticker,
+        swipeEvents: [...state.swipeEvents, { ticker, direction: "LEFT", timestamp: Date.now() }],
+      })),
+
+    swipeRight: (ticker: string) =>
+      set((state) => {
+        const stock = state.deck.find((card) => card.ticker === ticker);
+        if (!stock) return state;
+        const inbox = { ...state.inbox, [ticker]: stock };
+        const chatThreads = state.chatThreads[ticker]
+          ? state.chatThreads
+          : { ...state.chatThreads, [ticker]: buildInitialChat(stock) };
+        return {
+          inbox,
+          chatThreads,
+          currentIndex: state.currentIndex + 1,
+          swipeEvents: [...state.swipeEvents, { ticker, direction: "RIGHT", timestamp: Date.now() }],
+          activeInboxTicker: ticker,
+        };
+      }),
+    setActiveInboxTicker: (ticker: string) => set({ activeInboxTicker: ticker }),
+    sendMessage: (ticker: string, text: string) => {
+      const { chatThreads, inbox } = get();
+      const stock = inbox[ticker] ?? get().deck.find((card) => card.ticker === ticker);
+      if (!stock) return;
+
+      const userMessage: ChatMessage = {
+        id: nanoid(),
+        sender: "user",
+        text,
+        timestamp: new Date().toISOString(),
       };
-    }),
-  setActiveInboxTicker: (ticker) => set({ activeInboxTicker: ticker }),
-  sendMessage: (ticker, text) => {
-    const { chatThreads, inbox } = get();
-    const stock = inbox[ticker] ?? get().deck.find((card) => card.ticker === ticker);
-    if (!stock) return;
 
-    const userMessage: ChatMessage = {
-      id: nanoid(),
-      sender: "user",
-      text,
-      timestamp: new Date().toISOString(),
-    };
+      const simulatedReply: ChatMessage = {
+        id: nanoid(),
+        sender: "ai",
+        text: buildAiResponse(stock, text),
+        timestamp: new Date().toISOString(),
+      };
 
-    const simulatedReply: ChatMessage = {
-      id: nanoid(),
-      sender: "ai",
-      text: buildAiResponse(stock, text),
-      timestamp: new Date().toISOString(),
-    };
+      set({
+        chatThreads: {
+          ...chatThreads,
+          [ticker]: [...(chatThreads[ticker] ?? buildInitialChat(stock)), userMessage, simulatedReply],
+        },
+      });
+    },
+  };
 
-    set({
-      chatThreads: {
-        ...chatThreads,
-        [ticker]: [...(chatThreads[ticker] ?? buildInitialChat(stock)), userMessage, simulatedReply],
-      },
-    });
-  },
-}));
+  actions.loadDeck();
+
+  return { ...initialState, ...actions };
+});
 
 const buildAiResponse = (stock: StockCardData, userPrompt: string) => {
   const score = computeScore(stock);
