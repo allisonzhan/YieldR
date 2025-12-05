@@ -3,7 +3,7 @@ import { StockCardData } from "@/types";
 const randomRange = (min: number, max: number, decimals: number = 2) =>
   (Math.random() * (max - min) + min).toFixed(decimals);
 
-export const mockFullDeck: StockCardData[] = [
+export const stockDeck: StockCardData[] = [
   {
     ticker: "NVDA",
     name: "NVIDIA Corp",
