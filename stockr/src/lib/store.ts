@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { ChatMessage, StockCardData } from "@/types";
 import { computeScore } from "@/lib/stockScore";
-import { mockFullDeck } from "@/data/mockFullDeck";
+import { mockFullDeck } from "../data/mockFullDeck"; 
 
 export type SwipeDirection = "LEFT" | "RIGHT";
 
@@ -35,7 +35,7 @@ const buildInitialChat = (stock: StockCardData): ChatMessage[] => [
 interface StockStoreState {
   deck: StockCardData[];
   currentIndex: number;
-  isLoading: boolean; 
+  isLoading: boolean;
   inbox: Record<string, StockCardData>;
   chatThreads: Record<string, ChatMessage[]>;
   swipeEvents: SwipeEvent[];
@@ -44,7 +44,7 @@ interface StockStoreState {
   swipeRight: (ticker: string) => void;
   setActiveInboxTicker: (ticker: string) => void;
   sendMessage: (ticker: string, message: string) => void;
-  loadDeck: () => Promise<void>; 
+  loadDeck: () => Promise<void>;
 }
 
 export const useStockStore = create<StockStoreState>((set, get) => {
@@ -52,7 +52,7 @@ export const useStockStore = create<StockStoreState>((set, get) => {
   const initialState = {
     deck: [],
     currentIndex: 0,
-    isLoading: true, 
+    isLoading: true,
     inbox: {},
     chatThreads: {},
     swipeEvents: [],
