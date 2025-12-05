@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { ChatMessage, StockCardData } from "@/types";
 import { computeScore } from "@/lib/stockScore";
-import { mockFullDeck } from "../data/mockFullDeck"; 
+import { stockDeck } from "@/data/stocks";
 
 export type SwipeDirection = "LEFT" | "RIGHT";
 
