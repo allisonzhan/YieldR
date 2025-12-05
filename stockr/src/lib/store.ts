@@ -65,7 +65,7 @@ export const useStockStore = create<StockStoreState>((set, get) => {
 
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      const shuffledDeck = shuffleArray([...mockFullDeck]);
+      const shuffledDeck = shuffleArray([...stockDeck]);
 
       set({
         deck: shuffledDeck,
